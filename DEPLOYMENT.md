@@ -10,17 +10,17 @@
 
 | Mục | Nội dung |
 |-----|----------|
-| Họ và tên | (điền họ tên) |
-| Mã học viên | (điền mã học viên) |
-| Repo | (điền link repo K4-L3A-DAY12-HoVaTen-MSSV-CloudServicesAndDeployment) |
+| Họ và tên | Bùi Thị Ngọc Trân |
+| Mã học viên | 2A202602529 |
+| Repo | https://github.com/trantran2929/K4-L3A-DAY12-BuiThiNgocTran-2A202602529-CloudServicesAndDeployment |
 
 ## Service
 
 | Mục | Nội dung |
 |-----|----------|
-| Public URL | https://TODO-thay-bang-url-that.up.railway.app |
-| Platform | Railway / Render / Cloud Run — (điền platform bạn dùng) |
-| Ngày deploy | (điền ngày) |
+| Public URL | https://day12-agent-production-84c6.up.railway.app |
+| Platform | Railway |
+| Ngày deploy | 28-09-2026 |
 
 ## Biến Môi Trường Đã Set Trên Cloud
 
@@ -30,7 +30,7 @@ Ghi tên biến và **nguồn giá trị**, không ghi giá trị:
 |------|--------|---------|
 | `PORT` | ✅ | platform tự gán |
 | `AGENT_API_KEY` | ✅ | đặt trong dashboard, không nằm trong repo |
-| `REDIS_URL` | ✅ | (điền: Redis add-on của platform / Upstash / ...) |
+| `REDIS_URL` | ✅ | Tham chiếu REDIS_URL từ service Redis trong variables của project Railway |
 | `RATE_LIMIT_PER_MINUTE` | ✅ | 10 |
 | `MONTHLY_BUDGET_USD` | ✅ | 10.0 |
 | `LOG_LEVEL` | ✅ | INFO |
@@ -41,26 +41,26 @@ Thay `<URL>` bằng Public URL ở trên:
 
 ```bash
 # 1. Liveness — mong đợi 200 {"status":"ok"}
-curl -i <URL>/health
+curl -i https://day12-agent-production-84c6.up.railway.app/health
 
 # 2. Readiness — mong đợi 200 {"status":"ready"} (đã nối được Redis)
-curl -i <URL>/ready
+curl -i https://day12-agent-production-84c6.up.railway.app/ready
 
 # 3. Không có API key — mong đợi 401
-curl -i -X POST <URL>/ask \
+curl -i -X POST https://day12-agent-production-84c6.up.railway.app/ask \
   -H "Content-Type: application/json" \
   -d '{"question":"Hello"}'
 
 # 4. Có API key — mong đợi 200 kèm câu trả lời
-curl -i -X POST <URL>/ask \
+curl -i -X POST https://day12-agent-production-84c6.up.railway.app/ask \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $AGENT_API_KEY" \
   -H "X-User-Id: sv-test" \
-  -d '{"question":"Deploy là gì?"}'
+  -d '{"question":"Deploy la gi"}'
 
 # 5. Rate limit — gọi 15 lần, những lần cuối phải trả 429
 for i in $(seq 1 15); do
-  curl -s -o /dev/null -w "%{http_code} " -X POST <URL>/ask \
+  curl.exe -s -o /dev/null -w "%{http_code} " -X POST https://day12-agent-production-84c6.up.railway.app/ask \
     -H "Content-Type: application/json" \
     -H "X-API-Key: $AGENT_API_KEY" \
     -H "X-User-Id: sv-test" \
@@ -73,7 +73,32 @@ done; echo
 Dán output của các lệnh trên vào đây:
 
 ```
-(điền output)
+Kết quả chạy ngày 28-09-2026 bằng Git Bash.
+Trích mã HTTP và response body; lược bỏ các header vận chuyển.
+
+1. GET /health
+HTTP/1.1 200 OK
+{"status":"ok","service":"day12-agent","version":"1.0.0"}
+
+2. GET /ready
+HTTP/1.1 200 OK
+{"status":"ready","redis":true}
+
+3. POST /ask không có API key, question = "Hello"
+HTTP/1.1 401 Unauthorized
+{"detail":"invalid or missing API key"}
+
+4. POST /ask có API key hợp lệ, question = "Deploy la gi"
+Kết quả sau khi nạp lại AGENT_API_KEY từ DEPLOY_API_KEY trong .env:
+HTTP/1.1 200 OK
+{"answer":"Với Deploy la gi, cách làm phổ biến trong production là đặt một lớp gateway phía trước để lo authentication, rate limiting và bảo vệ chi phí. (Mình đang nhớ 20 lượt trao đổi trước đó.)","user_id":"sv-test","history_length":20,"cost_usd":9.57e-05,"tokens":{"in":454,"out":46}}
+
+5. Rate limit — gọi 15 lần liên tiếp với X-User-Id: sv-test
+200 200 200 200 200 200 200 200 200 429 429 429 429 429 429
+
+Có 9 request thành công trong vòng lặp vì cùng user đã có 1 request
+thành công ở bước 4 trong cửa sổ 60 giây. Các request vượt hạn mức
+10 request/phút trả HTTP 429.
 ```
 
 ## Ảnh Chụp Màn Hình
@@ -97,5 +122,5 @@ Không đăng ký được tài khoản cloud? Vẫn nộp được bài, nhưng
 5. Ghi rõ lý do không deploy được vào phần dưới đây:
 
 ```
-(điền lý do nếu dùng phương án dự phòng, ngược lại xóa mục này)
+Không áp dụng. Service đã deploy thành công trên Railway.
 ```
